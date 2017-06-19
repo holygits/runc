@@ -3,8 +3,8 @@
 package libcontainer
 
 import (
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -309,19 +309,13 @@ func (l *LinuxFactory) StartInitialization() (err error) {
 }
 
 func (l *LinuxFactory) loadState(root, id string) (*State, error) {
-	f, err := os.Open(filepath.Join(root, stateFilename))
+	buf, err := ioutil.ReadFile(filepath.Join(root, stateFilename))
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, newGenericError(fmt.Errorf("container %q does not exist", id), ContainerNotExists)
-		}
-		return nil, newGenericError(err, SystemError)
+		return nil, err
 	}
-	defer f.Close()
-	var state *State
-	if err := json.NewDecoder(f).Decode(&state); err != nil {
-		return nil, newGenericError(err, SystemError)
-	}
-	return state, nil
+	state := &State{}
+	err = state.UnmarshalJSON(buf)
+	return state, err
 }
 
 func (l *LinuxFactory) validateID(id string) error {

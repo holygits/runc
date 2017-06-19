@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
@@ -213,51 +212,51 @@ type Capabilities struct {
 	Ambient []string
 }
 
-func (hooks *Hooks) UnmarshalJSON(b []byte) error {
-	var state struct {
-		Prestart  []CommandHook
-		Poststart []CommandHook
-		Poststop  []CommandHook
-	}
+// func (hooks *Hooks) UnmarshalJSON(b []byte) error {
+// 	var state struct {
+// 		Prestart  []CommandHook
+// 		Poststart []CommandHook
+// 		Poststop  []CommandHook
+// 	}
 
-	if err := json.Unmarshal(b, &state); err != nil {
-		return err
-	}
+// 	if err := json.Unmarshal(b, &state); err != nil {
+// 		return err
+// 	}
 
-	deserialize := func(shooks []CommandHook) (hooks []Hook) {
-		for _, shook := range shooks {
-			hooks = append(hooks, shook)
-		}
+// 	deserialize := func(shooks []CommandHook) (hooks []Hook) {
+// 		for _, shook := range shooks {
+// 			hooks = append(hooks, shook)
+// 		}
 
-		return hooks
-	}
+// 		return hooks
+// 	}
 
-	hooks.Prestart = deserialize(state.Prestart)
-	hooks.Poststart = deserialize(state.Poststart)
-	hooks.Poststop = deserialize(state.Poststop)
-	return nil
-}
+// 	hooks.Prestart = deserialize(state.Prestart)
+// 	hooks.Poststart = deserialize(state.Poststart)
+// 	hooks.Poststop = deserialize(state.Poststop)
+// 	return nil
+// }
 
-func (hooks Hooks) MarshalJSON() ([]byte, error) {
-	serialize := func(hooks []Hook) (serializableHooks []CommandHook) {
-		for _, hook := range hooks {
-			switch chook := hook.(type) {
-			case CommandHook:
-				serializableHooks = append(serializableHooks, chook)
-			default:
-				logrus.Warnf("cannot serialize hook of type %T, skipping", hook)
-			}
-		}
+// func (hooks Hooks) MarshalJSON() ([]byte, error) {
+// 	serialize := func(hooks []Hook) (serializableHooks []CommandHook) {
+// 		for _, hook := range hooks {
+// 			switch chook := hook.(type) {
+// 			case CommandHook:
+// 				serializableHooks = append(serializableHooks, chook)
+// 			default:
+// 				logrus.Warnf("cannot serialize hook of type %T, skipping", hook)
+// 			}
+// 		}
 
-		return serializableHooks
-	}
+// 		return serializableHooks
+// 	}
 
-	return json.Marshal(map[string]interface{}{
-		"prestart":  serialize(hooks.Prestart),
-		"poststart": serialize(hooks.Poststart),
-		"poststop":  serialize(hooks.Poststop),
-	})
-}
+// 	return json.Marshal(map[string]interface{}{
+// 		"prestart":  serialize(hooks.Prestart),
+// 		"poststart": serialize(hooks.Poststart),
+// 		"poststop":  serialize(hooks.Poststop),
+// 	})
+// }
 
 // HookState is the payload provided to a hook on execution.
 type HookState specs.State

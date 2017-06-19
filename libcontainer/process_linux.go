@@ -68,6 +68,7 @@ func (p *setnsProcess) signal(sig os.Signal) error {
 }
 
 func (p *setnsProcess) start() (err error) {
+
 	defer p.parentPipe.Close()
 	err = p.cmd.Start()
 	p.childPipe.Close()
@@ -82,12 +83,19 @@ func (p *setnsProcess) start() (err error) {
 	if err = p.execSetns(); err != nil {
 		return newSystemErrorWithCause(err, "executing setns process")
 	}
+
+	// Causes ~80% of startup time
 	// We can't join cgroups if we're in a rootless container.
+
 	if !p.config.Rootless && len(p.cgroupPaths) > 0 {
-		if err := cgroups.EnterPid(p.cgroupPaths, p.pid()); err != nil {
-			return newSystemErrorWithCausef(err, "adding pid %d to cgroups", p.pid())
-		}
+		go func() error {
+			if err := cgroups.EnterPid(p.cgroupPaths, p.pid()); err != nil {
+				return newSystemErrorWithCausef(err, "adding pid %d to cgroups", p.pid())
+			}
+			return nil
+		}()
 	}
+
 	// set rlimits, this has to be done here because we lose permissions
 	// to raise the limits once we enter a user-namespace
 	if err := setupRlimits(p.config.Rlimits, p.pid()); err != nil {

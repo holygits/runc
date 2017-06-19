@@ -357,6 +357,7 @@ func PathExists(path string) bool {
 }
 
 func EnterPid(cgroupPaths map[string]string, pid int) error {
+
 	for _, path := range cgroupPaths {
 		if PathExists(path) {
 			if err := WriteCgroupProc(path, pid); err != nil {
@@ -364,6 +365,7 @@ func EnterPid(cgroupPaths map[string]string, pid int) error {
 			}
 		}
 	}
+
 	return nil
 }
 

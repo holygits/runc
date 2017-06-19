@@ -253,6 +253,7 @@ func (c *linuxContainer) exec() error {
 }
 
 func (c *linuxContainer) start(process *Process, isInit bool) error {
+
 	parent, err := c.newParentProcess(process, isInit)
 	if err != nil {
 		return newSystemErrorWithCause(err, "creating new parent process")
