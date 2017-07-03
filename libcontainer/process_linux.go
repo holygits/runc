@@ -86,7 +86,6 @@ func (p *setnsProcess) start() (err error) {
 
 	// Causes ~80% of startup time
 	// We can't join cgroups if we're in a rootless container.
-
 	if !p.config.Rootless && len(p.cgroupPaths) > 0 {
 		go func() error {
 			if err := cgroups.EnterPid(p.cgroupPaths, p.pid()); err != nil {
@@ -148,6 +147,14 @@ func (p *setnsProcess) execSetns() error {
 		p.cmd.Wait()
 		return newSystemErrorWithCause(err, "reading pid from init pipe")
 	}
+
+	// Clean up the zombie parent process if it exists
+	parentProcess, err := os.FindProcess(pid.Pid2)
+	if err != nil {
+		return err
+	}
+	_, _ = parentProcess.Wait()
+
 	process, err := os.FindProcess(pid.Pid)
 	if err != nil {
 		return err
@@ -231,6 +238,13 @@ func (p *initProcess) execSetns() error {
 		p.cmd.Wait()
 		return err
 	}
+
+	parentProcess, err := os.FindProcess(pid.Pid2)
+	if err != nil {
+		return err
+	}
+	_, _ = parentProcess.Wait()
+
 	process, err := os.FindProcess(pid.Pid)
 	if err != nil {
 		return err

@@ -543,7 +543,7 @@ void nsexec(void)
 	 */
 	case JUMP_PARENT: {
 			int len;
-			pid_t child;
+			pid_t child, old_child = -1;
 			char buf[JSON_MAX];
 			bool ready = false;
 
@@ -607,18 +607,18 @@ void nsexec(void)
 					}
 					break;
 				case SYNC_RECVPID_PLS: {
-						pid_t old = child;
+						old_child = child;
 
 						/* Get the init_func pid. */
 						if (read(syncfd, &child, sizeof(child)) != sizeof(child)) {
-							kill(old, SIGKILL);
+							kill(old_child, SIGKILL);
 							bail("failed to sync with child: read(childpid)");
 						}
 
 						/* Send ACK. */
 						s = SYNC_RECVPID_ACK;
 						if (write(syncfd, &s, sizeof(s)) != sizeof(s)) {
-							kill(old, SIGKILL);
+							kill(old_child, SIGKILL);
 							kill(child, SIGKILL);
 							bail("failed to sync with child: write(SYNC_RECVPID_ACK)");
 						}
@@ -667,7 +667,7 @@ void nsexec(void)
 			}
 
 			/* Send the init_func pid back to our parent. */
-			len = snprintf(buf, JSON_MAX, "{\"pid\": %d}\n", child);
+			len = snprintf(buf, JSON_MAX, "{\"pid\": %d, \"pid2\": %d}\n", child, old_child);
 			if (len < 0) {
 				kill(child, SIGKILL);
 				bail("unable to generate JSON for child pid");
@@ -690,7 +690,7 @@ void nsexec(void)
 	 *          child's PID to our parent (stage 0).
 	 */
 	case JUMP_CHILD: {
-			pid_t child;
+			pid_t child = -1;
 			enum sync_t s;
 
 			/* We're in a child and thus need to tell the parent if we die. */

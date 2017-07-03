@@ -31,7 +31,8 @@ const (
 )
 
 type pid struct {
-	Pid int `json:"pid"`
+	Pid  int `json:"pid"`
+	Pid2 int `json:"pid2"`
 }
 
 // network is an internal struct used to setup container networks.

@@ -208,6 +208,7 @@ func (c *linuxContainer) Start(process *Process) error {
 		}
 		return err
 	}
+
 	return nil
 }
 
